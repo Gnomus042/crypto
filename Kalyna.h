@@ -33,10 +33,14 @@ private:
 
     void shift_rows(Block &block);
     void inv_shift_rows(Block &block);
+    vector<Byte> mult;
+    vector<Byte> inv_mult;
     vector<vector<Byte>> sboxes;
     vector<vector<Byte>> inv_sboxes;
-    int key_length;
-    int data_length;
+    int key_size;
+    int block_size;
+    int columns;
+    int rounds;
 };
 
 #endif //CRYPTO_KALYNA_H
