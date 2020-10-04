@@ -5,7 +5,6 @@ ADD_DEFINITIONS("-std=gnu++0x")
 # Add main.cpp file of project root directory as source file
 set(
         SOURCE_FILES
-        main.cpp
         AES.cpp
         AES.h
         helper.cpp
@@ -15,7 +14,7 @@ set(
 )
 
 # Add executable target with source files listed in SOURCE_FILES variable
-add_executable(crypto ${SOURCE_FILES})
+add_executable(crypto ${SOURCE_FILES} main.cpp)
 
 # Add googletest
 add_subdirectory(googletest)
