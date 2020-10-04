@@ -14,7 +14,7 @@ Byte Byte::operator*(const Byte &other) {
     uint8_t a = other.data;
     while (b) {
         if (b & 1) res ^= a;
-        if (a & 0x80) a = (a << 1) ^ 0x011b;
+        if (a & 0x80) a = (a << 1) ^ 0x11D; //0x011b for aes
         else a <<= 1;
         b >>= 1;
     }
@@ -34,13 +34,13 @@ Byte Byte::invert(const Byte &val) {
 
 Block::Block() {}
 
-Block::Block(const uint8_t* data, int x, int y) {
+Block::Block(const uint8_t *data, int x, int y) {
     this->x = x;
     this->y = y;
     for (int i = 0; i < x; i++) this->data.push_back(vector<Byte>(y));
     for (int i = 0; i < y; i++) {
         for (int j = 0; j < x; j++) {
-            this->data[j][i] = {data[i*y+j]};
+            this->data[j][i] = {data[i * x + j]};
         }
     }
 }
@@ -56,7 +56,11 @@ Block::Block(int x, int y) {
     }
 }
 
-void Block::copyFrom(const Block& other) {
+void Block::copyFrom(const Block &other) {
+    this->x = other.x;
+    this->y = other.y;
+    this->data.clear();
+    for (int i = 0; i < x; i++) this->data.push_back(vector<Byte>(y));
     for (int i = 0; i < y; i++) {
         for (int j = 0; j < x; j++) {
             this->data[j][i] = other.data[j][i];
@@ -64,10 +68,10 @@ void Block::copyFrom(const Block& other) {
     }
 }
 
-vector<uint8_t> Block::get_data() {
+vector<uint8_t> Block::get_data() const {
     vector<uint8_t> res;
-    for(int i = 0; i < y; i++) {
-        for(int j = 0; j < x; j++) {
+    for (int i = 0; i < y; i++) {
+        for (int j = 0; j < x; j++) {
             res.push_back(this->data[j][i].data);
         }
     }
@@ -75,68 +79,136 @@ vector<uint8_t> Block::get_data() {
 }
 
 void Block::print() const {
-    for(int i = 0; i < x; i++) {
-        for(int j = 0; j < y; j++) {
-            cout << hex << (int)this->data[i][j].data << " ";
+    for (int i = 0; i < x; i++) {
+        for (int j = 0; j < y; j++) {
+            cout << hex << (int) this->data[i][j].data << " ";
         }
         cout << endl;
     }
     cout << endl;
 }
 
-void sub_bytes(Block& block, const vector<Byte> &substitution_box) {
+Block::Block(const Block &other) {
+    this->copyFrom(other);
+}
+
+void Block::left_shift(int val) {
+    for (int i = 0; i < y; i++) {
+        auto col = get_col(i);
+        col <<= 1;
+        set_col(i, col);
+    }
+}
+
+void Block::right_shift(int val) {
+    for (int i = 0; i < y; i++) {
+        auto col = get_col(i);
+        col >>= 1;
+        set_col(i, col);
+    }
+}
+
+void Block::left_rotate(int val) {
+    val /= 8;
+    vector<uint8_t> temp_data = get_data();
+    rotate(begin(temp_data), begin(temp_data)+val, end(temp_data));
+    Block temp(temp_data.data(), x, y);
+    copyFrom(temp);
+}
+
+void Block::right_rotate(int val) {
+    uint64_t temp = get_col(y-1);
+    for (int i = y-1; i > 0; i--) {
+        set_col(i, get_col(i-1));
+    }
+    set_col(0, temp);
+}
+
+uint64_t Block::get_col(int number) const {
+    return static_cast<uint64_t>(this->data[0][number].data) |
+           static_cast<uint64_t>(this->data[1][number].data) << 8 |
+           static_cast<uint64_t>(this->data[2][number].data) << 16 |
+           static_cast<uint64_t>(this->data[3][number].data) << 24 |
+           static_cast<uint64_t>(this->data[4][number].data) << 32 |
+           static_cast<uint64_t>(this->data[5][number].data) << 40 |
+           static_cast<uint64_t>(this->data[6][number].data) << 48 |
+           static_cast<uint64_t>(this->data[7][number].data) << 56;
+}
+
+void Block::set_col(int number, uint64_t val) {
+    for (int i = 0; i < 8; i++) {
+        data[i][number].data = (val >> (i*8))&0xff;
+    }
+}
+
+
+void sub_bytes(Block &block, const vector<vector<Byte>> &substitution_boxes) {
     for (int i = 0; i < block.y; i++) {
         for (int j = 0; j < block.x; j++) {
-            block.data[j][i] = substitution_box[block.data[j][i].data];
+            block.data[j][i] = substitution_boxes[j % substitution_boxes.size()][block.data[j][i].data];
         }
     }
 }
 
-void shift_rows(Block& block) {
-    for(int i = 0; i < block.x; i++) {
-        vector<Byte> temp;
-        for (int j = 0; j < block.y; j++) {
-            temp.push_back(block.data[i][j]);
-        }
-        rotate(begin(temp), begin(temp)+i, end(temp));
-        for (int j = 0; j < block.y; j++) {
-            block.data[i][j] = temp[j];
-        }
-    }
-}
-
-void inv_shift_rows(Block& block) {
-    for(int i = 0; i < block.x; i++) {
-        vector<Byte> temp;
-        for (int j = 0; j < block.y; j++) {
-            temp.push_back(block.data[i][j]);
-        }
-        rotate(begin(temp), begin(temp)+(block.x - i), end(temp));
-        for (int j = 0; j < block.y; j++) {
-            block.data[i][j] = temp[j];
-        }
-    }
-}
-
-void mix_columns(Block& block, const vector<Byte>& mult) {
-    Block new_block = Block(block.x, block.y);
+void shift_rows(Block &block) {
     for (int i = 0; i < block.x; i++) {
+        vector<Byte> temp;
+        for (int j = 0; j < block.y; j++) {
+            temp.push_back(block.data[i][j]);
+        }
+        rotate(begin(temp), begin(temp) + i, end(temp));
+        for (int j = 0; j < block.y; j++) {
+            block.data[i][j] = temp[j];
+        }
+    }
+}
+
+void inv_shift_rows(Block &block) {
+    for (int i = 0; i < block.x; i++) {
+        vector<Byte> temp;
+        for (int j = 0; j < block.y; j++) {
+            temp.push_back(block.data[i][j]);
+        }
+        rotate(begin(temp), begin(temp) + (block.x - i), end(temp));
+        for (int j = 0; j < block.y; j++) {
+            block.data[i][j] = temp[j];
+        }
+    }
+}
+
+void mix_columns(Block &block, const vector<Byte> &mult) {
+    Block new_block = Block(block.x, block.y);
+    for (int i = 0; i < block.y; i++) {
         vector<Byte> temp = mult;
-        for (int j = 0; j < block.y ; j++) {
-            for (int k = 0; k < block.y; k++) {
-                new_block.data[j][i] = new_block.data[j][i] + temp[k]*block.data[k][i];
+        for (int j = 0; j < block.x; j++) {
+            for (int k = 0; k < mult.size(); k++) {
+                new_block.data[j][i] = new_block.data[j][i] + temp[k] * block.data[k][i];
             }
-            rotate(begin(temp), end(temp)-1, end(temp));
+            rotate(begin(temp), end(temp) - 1, end(temp));
         }
 
     }
     block.copyFrom(new_block);
 }
 
-void add_round_key(Block& block, const Block& key) {
+void xor_round_key(Block &block, const Block &key) {
     for (int i = 0; i < block.x; i++) {
         for (int j = 0; j < block.y; j++) {
             block.data[i][j] = block.data[i][j] + key.data[i][j];
         }
+    }
+}
+
+void add_round_key(Block &block, const Block &key) {
+    for (int i = 0; i < block.y; i++) {
+        uint64_t col = block.get_col(i) + key.get_col(i);
+        block.set_col(i, col);
+    }
+}
+
+void sub_round_key(Block &block, const Block &key) {
+    for (int i = 0; i < block.y; i++) {
+        uint64_t col = block.get_col(i) - key.get_col(i);
+        block.set_col(i, col);
     }
 }

@@ -24,11 +24,11 @@ private:
     void make_key_schedule(const Block &key, int blocks_count);
     Block encrypt_block(const Block &data);
     Block decrypt_block(const Block &data);
+    int blocks_count;
     vector<Byte> sbox;
     vector<Byte> inv_sbox;
     Block rcon;
     vector<Block> key_schedule;
-
 };
 
 

@@ -26,16 +26,25 @@ struct Block {
     explicit Block();
     Block(const uint8_t* data, int x, int y);
     Block(int x, int y);
+    Block(const Block& other);
     void copyFrom(const Block& other);
-    vector<uint8_t> get_data();
+    vector<uint8_t> get_data() const;
     void print() const;
+    void left_shift(int val);
+    void right_shift(int val);
+    void left_rotate(int val);
+    void right_rotate(int val);
+    uint64_t get_col(int number) const;
+    void set_col(int number, uint64_t);
 };
 
-void sub_bytes(Block& block, const vector<Byte> &substitution_box);
+void sub_bytes(Block& block, const vector<vector<Byte>> &substitution_boxes);
 void shift_rows(Block& block);
 void inv_shift_rows(Block& block);
 void mix_columns(Block& block, const vector<Byte>& mult);
+void xor_round_key(Block& block, const Block& key);
 void add_round_key(Block& block, const Block& key);
+void sub_round_key(Block& block, const Block& key);
 
 
 #endif //CRYPTO_HELPER_H

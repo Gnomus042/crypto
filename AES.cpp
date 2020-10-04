@@ -7,6 +7,11 @@
 vector<uint8_t> rcon_header = {1, 2, 4, 8, 16, 32, 64, 128, 27, 54};
 
 AES::AES(const vector<uint8_t> &key) {
+    if (key.size()*8 != 128 && key.size()*8 != 192 && key.size()*8 != 256) {
+        cout << "Invalid key size provided";
+        throw 1;
+    }
+    this->blocks_count = key.size()*8 == 128 ? 11 : key.size()*8 == 192 ? 13:15;
     this->generate_sbox();
     this->generate_inv_sbox();
     this->rcon = Block(4, rcon_header.size());
@@ -14,7 +19,7 @@ AES::AES(const vector<uint8_t> &key) {
         this->rcon.data[0][i] = {rcon_header[i]};
     }
     Block key_block = Block(key.data(), 4, 4);
-    this->make_key_schedule(key_block, 11);
+    this->make_key_schedule(key_block, blocks_count);
 }
 
 vector<uint8_t> AES::encrypt(vector<uint8_t> data) {
@@ -107,16 +112,16 @@ Block AES::encrypt_block(const Block &data) {
                          {3},
                          {1},
                          {1}};
-    add_round_key(encrypted, this->key_schedule[0]);
-    for (int i = 1; i < 10; i++) {
-        sub_bytes(encrypted, this->sbox);
+    xor_round_key(encrypted, this->key_schedule[0]);
+    for (int i = 1; i < blocks_count-1; i++) {
+        sub_bytes(encrypted, {this->sbox});
         shift_rows(encrypted);
         mix_columns(encrypted, mult);
-        add_round_key(encrypted, this->key_schedule[i]);
+        xor_round_key(encrypted, this->key_schedule[i]);
     }
-    sub_bytes(encrypted, this->sbox);
+    sub_bytes(encrypted, {this->sbox});
     shift_rows(encrypted);
-    add_round_key(encrypted, this->key_schedule[10]);
+    xor_round_key(encrypted, this->key_schedule[blocks_count-1]);
     return encrypted;
 }
 
@@ -127,16 +132,16 @@ Block AES::decrypt_block(const Block &data) {
                          {11},
                          {13},
                          {9}};
-    add_round_key(decrypted, this->key_schedule[10]);
-    for (int i = 9; i >= 1; i--) {
+    xor_round_key(decrypted, this->key_schedule[blocks_count-1]);
+    for (int i = blocks_count-2; i >= 1; i--) {
         inv_shift_rows(decrypted);
-        sub_bytes(decrypted, this->inv_sbox);
-        add_round_key(decrypted, this->key_schedule[i]);
+        sub_bytes(decrypted, {this->inv_sbox});
+        xor_round_key(decrypted, this->key_schedule[i]);
         mix_columns(decrypted, mult);
     }
     inv_shift_rows(decrypted);
-    sub_bytes(decrypted, this->inv_sbox);
-    add_round_key(decrypted, this->key_schedule[0]);
+    sub_bytes(decrypted, {this->inv_sbox});
+    xor_round_key(decrypted, this->key_schedule[0]);
     return decrypted;
 }
 
