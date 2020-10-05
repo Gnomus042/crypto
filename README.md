@@ -52,6 +52,19 @@ cout << endl;
 Ñíq╢^x[1═òáO╝Aä%
 Two One Nine Two
 ```
-</br>
+<br />
 
 Also, there is a small subset of tests available in the *tests* folder.
+
+## Performance tests
+
+| Cipher type  | 1Gb file Encrypt + Decrypt| 
+| ------------- | ------------- |
+| AES 128  |  239s  |
+| AES 192  |  294s  |
+| AES 256  |  354s  |
+| Kalyna 128/128  |  958s  |
+| Kalyna 128/256  |  971s |
+| Kalyna 256/256  |  1795s  |
+| Kalyna 256/512  |  1799s  |
+| Kalyna 512/512  |  2548s  |
