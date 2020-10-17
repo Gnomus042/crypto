@@ -3,8 +3,9 @@
 //
 
 #include <gtest/gtest.h>
-#include "../AES.h"
-#include "../Kalyna.h"
+#include "../Lab1/AES.h"
+#include "../Lab1/Kalyna.h"
+#include <iostream>
 
 int main(int argc, char ** argv) {
     ::testing::InitGoogleTest(&argc, argv);
@@ -15,14 +16,16 @@ TEST (AES, 128_key)
 {
     string key_str = "1234567890123456";
     string data_str = "Absolutely random sentence";
+    string init_vector_str = "This is an initt";
 
     vector<uint8_t> key(begin(key_str), end(key_str));
+    vector<uint8_t> init_vector(begin(init_vector_str), end(init_vector_str));
     vector<uint8_t> data(begin(data_str), end(data_str));
 
-    AES aes(key);
+    AES aes(key, init_vector);
     string res = "";
-    for (uint8_t q: aes.decrypt(aes.encrypt(data))) {
-           res += (char)q;
+    for (uint8_t q: aes.decrypt(aes.encrypt(data, AES::Mode::ECB), AES::Mode::ECB)) {
+        res += (char)q;
     }
     res = res.substr(0, data.size());
     EXPECT_EQ(res, data_str);
@@ -32,13 +35,15 @@ TEST (AES, 256_key)
 {
     string key_str = "12345678901234561234567890123456";
     string data_str = "Absolutely random sentence";
+    string init_vector_str = "This is an init, this is an init";
 
     vector<uint8_t> key(begin(key_str), end(key_str));
     vector<uint8_t> data(begin(data_str), end(data_str));
+    vector<uint8_t> init_vector(begin(init_vector_str), end(init_vector_str));
 
-    AES aes(key);
+    AES aes(key, init_vector);
     string res = "";
-    for (uint8_t q: aes.decrypt(aes.encrypt(data))) {
+    for (uint8_t q: aes.decrypt(aes.encrypt(data, AES::Mode::ECB), AES::Mode::ECB)) {
         res += (char)q;
     }
     res = res.substr(0, data.size());
@@ -49,13 +54,15 @@ TEST (AES, 192_key)
 {
     string key_str = "123456789012345612345678";
     string data_str = "Absolutely random sentence";
+    string init_vector_str = "This is an init, this is";
 
     vector<uint8_t> key(begin(key_str), end(key_str));
     vector<uint8_t> data(begin(data_str), end(data_str));
+    vector<uint8_t> init_vector(begin(init_vector_str), end(init_vector_str));
 
-    AES aes(key);
+    AES aes(key, init_vector);
     string res = "";
-    for (uint8_t q: aes.decrypt(aes.encrypt(data))) {
+    for (uint8_t q: aes.decrypt(aes.encrypt(data, AES::Mode::ECB), AES::Mode::ECB)) {
         res += (char)q;
     }
     res = res.substr(0, data.size());
@@ -146,3 +153,4 @@ TEST (Kalyna, 512_key_512_data)
     res = res.substr(0, data.size());
     EXPECT_EQ(res, data_str);
 }
+

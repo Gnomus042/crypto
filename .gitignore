@@ -33,3 +33,5 @@
 
 cmake-build-debug/
 .idea/
+cmake-build-release/
+test/file_test.cpp

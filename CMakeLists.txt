@@ -5,12 +5,16 @@ ADD_DEFINITIONS("-std=gnu++0x")
 # Add main.cpp file of project root directory as source file
 set(
         SOURCE_FILES
-        AES.cpp
-        AES.h
+        Lab1/AES.cpp
+        Lab1/AES.h
         helper.cpp
         helper.h
-        Kalyna.cpp
-        Kalyna.h
+        Lab1/Kalyna.cpp
+        Lab1/Kalyna.h
+        Lab2/RC4.cpp
+        Lab2/RC4.h
+        Lab2/Salsa20.cpp
+        Lab2/Salsa20.h
 )
 
 # Add executable target with source files listed in SOURCE_FILES variable
@@ -23,7 +27,9 @@ include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
 set(
         TESTS
-        test/test.cpp
+        test/test1.cpp
+        test/test2.cpp
+        test/file_test.cpp
 )
 
 add_executable(crypto_unittest ${TESTS} ${SOURCE_FILES})

@@ -4,17 +4,17 @@
 
 #include "helper.h"
 
-Byte Byte::operator+(const Byte &other) {
+Byte Byte::operator+(const Byte &other) const{
     return {static_cast<uint8_t>(this->data ^ other.data)};
 }
 
-Byte Byte::operator*(const Byte &other) {
+Byte Byte::operator*(const Byte &other) const{
     uint8_t res = 0;
     uint8_t b = this->data;
     uint8_t a = other.data;
     while (b) {
         if (b & 1) res ^= a;
-        if (a & 0x80) a = (a << 1) ^ 0x11D; //0x011b for aes
+        if (a & 0x80) a = (a << 1) ^ 0x11D; //0x011b
         else a <<= 1;
         b >>= 1;
     }
@@ -30,6 +30,10 @@ Byte Byte::pow(Byte val, int power) {
 
 Byte Byte::invert(const Byte &val) {
     return Byte::pow(val, 254);
+}
+
+Byte Byte::left_rotate(const Byte &val, int d) {
+    return {static_cast<uint8_t>((val.data << d) | (val.data >> 32-d))};
 }
 
 Block::Block() {}
@@ -141,6 +145,16 @@ void Block::set_col(int number, uint64_t val) {
     }
 }
 
+Block Block::operator+(const Block &other) const {
+    Block res(*this);
+    for (int i = 0; i < x; i++) {
+        for (int j = 0; j < y; j++) {
+            res.data[i][j] = res.data[i][j] + other.data[i][j];
+        }
+    }
+    return res;
+}
+
 
 void sub_bytes(Block &block, const vector<vector<Byte>> &substitution_boxes) {
     for (int i = 0; i < block.y; i++) {
@@ -212,3 +226,21 @@ void sub_round_key(Block &block, const Block &key) {
         block.set_col(i, col);
     }
 }
+
+uint32_t u8to32(const uint8_t *begin) {
+    return static_cast<uint32_t>(*begin) |
+           static_cast<uint32_t>(*(begin + 1)) << 8 |
+           static_cast<uint32_t>(*(begin + 2)) << 16 |
+           static_cast<uint32_t>(*(begin + 3)) << 24;
+}
+
+vector<uint8_t> u32to8(uint32_t data) {
+    vector<uint8_t> res(4);
+    res[0] = data;
+    res[1] = data >> 8;
+    res[2] = data >> 16;
+    res[3] = data >> 24;
+    return res;
+}
+
+

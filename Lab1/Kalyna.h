@@ -8,7 +8,7 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
-#include "helper.h"
+#include "../helper.h"
 
 using namespace std;
 

@@ -13,10 +13,11 @@ using namespace std;
 
 struct Byte {
     uint8_t data;
-    Byte operator+(const Byte &other);
-    Byte operator*(const Byte &other);
+    Byte operator+(const Byte &other) const;
+    Byte operator*(const Byte &other) const;
     static Byte pow(Byte val, int power);
     static Byte invert(const Byte &val);
+    static Byte left_rotate(const Byte &val, int d);
 };
 
 struct Block {
@@ -27,6 +28,7 @@ struct Block {
     Block(const uint8_t* data, int x, int y);
     Block(int x, int y);
     Block(const Block& other);
+    Block operator+(const Block &other) const;
     void copyFrom(const Block& other);
     vector<uint8_t> get_data() const;
     void print() const;
@@ -46,5 +48,7 @@ void xor_round_key(Block& block, const Block& key);
 void add_round_key(Block& block, const Block& key);
 void sub_round_key(Block& block, const Block& key);
 
+uint32_t u8to32(const uint8_t *begin);
+vector<uint8_t> u32to8(uint32_t data);
 
 #endif //CRYPTO_HELPER_H

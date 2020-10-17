@@ -7,7 +7,7 @@
 
 #endif //CRYPTO_KALYNA_TABLES_H
 
-#include "helper.h"
+#include "../helper.h"
 //
 // Created by anast on 10/5/2020.
 //
