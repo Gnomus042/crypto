@@ -4,11 +4,11 @@
 
 #include "helper.h"
 
-Byte Byte::operator+(const Byte &other) const{
+Byte Byte::operator+(const Byte &other) const {
     return {static_cast<uint8_t>(this->data ^ other.data)};
 }
 
-Byte Byte::operator*(const Byte &other) const{
+Byte Byte::operator*(const Byte &other) const {
     uint8_t res = 0;
     uint8_t b = this->data;
     uint8_t a = other.data;
@@ -33,7 +33,7 @@ Byte Byte::invert(const Byte &val) {
 }
 
 Byte Byte::left_rotate(const Byte &val, int d) {
-    return {static_cast<uint8_t>((val.data << d) | (val.data >> 32-d))};
+    return {static_cast<uint8_t>((val.data << d) | (val.data >> 32 - d))};
 }
 
 Block::Block() {}
@@ -115,15 +115,15 @@ void Block::right_shift(int val) {
 void Block::left_rotate(int val) {
     val /= 8;
     vector<uint8_t> temp_data = get_data();
-    rotate(begin(temp_data), begin(temp_data)+val, end(temp_data));
+    rotate(begin(temp_data), begin(temp_data) + val, end(temp_data));
     Block temp(temp_data.data(), x, y);
     copyFrom(temp);
 }
 
 void Block::right_rotate(int val) {
-    uint64_t temp = get_col(y-1);
-    for (int i = y-1; i > 0; i--) {
-        set_col(i, get_col(i-1));
+    uint64_t temp = get_col(y - 1);
+    for (int i = y - 1; i > 0; i--) {
+        set_col(i, get_col(i - 1));
     }
     set_col(0, temp);
 }
@@ -141,7 +141,7 @@ uint64_t Block::get_col(int number) const {
 
 void Block::set_col(int number, uint64_t val) {
     for (int i = 0; i < 8; i++) {
-        data[i][number].data = (val >> (i*8))&0xff;
+        data[i][number].data = (val >> (i * 8)) & 0xff;
     }
 }
 
@@ -153,6 +153,23 @@ Block Block::operator+(const Block &other) const {
         }
     }
     return res;
+}
+
+void Block::rotate_row(int n, int d) {
+    vector<Byte> temp;
+    for (int j = 0; j < y; j++) temp.push_back(data[n][j]);
+    rotate(begin(temp), begin(temp) + temp.size() - d, end(temp));
+    for (int j = 0; j < y; j++) data[n][j] = temp[j];
+}
+
+void Block::print() {
+    for (int i = 0; i < x; i++) {
+        for (int j = 0; j < y; j++) {
+            cout << hex << (int)data[i][j].data << " ";
+        }
+        cout << endl;
+    }
+    cout << endl;
 }
 
 
@@ -228,19 +245,49 @@ void sub_round_key(Block &block, const Block &key) {
 }
 
 uint32_t u8to32(const uint8_t *begin) {
-    return static_cast<uint32_t>(*begin) |
-           static_cast<uint32_t>(*(begin + 1)) << 8 |
-           static_cast<uint32_t>(*(begin + 2)) << 16 |
-           static_cast<uint32_t>(*(begin + 3)) << 24;
+    return static_cast<uint32_t>(*begin) << 24 |
+           static_cast<uint32_t>(*(begin + 1)) << 16 |
+           static_cast<uint32_t>(*(begin + 2)) << 8 |
+           static_cast<uint32_t>(*(begin + 3));
 }
 
 vector<uint8_t> u32to8(uint32_t data) {
     vector<uint8_t> res(4);
+    res[0] = data >> 24;
+    res[1] = data >> 16;
+    res[2] = data >> 8;
+    res[3] = data;
+    return res;
+}
+
+vector<uint8_t> u64to8(uint64_t data) {
+    vector<uint8_t> res(8);
     res[0] = data;
     res[1] = data >> 8;
     res[2] = data >> 16;
     res[3] = data >> 24;
+    res[4] = data >> 32;
+    res[5] = data >> 40;
+    res[6] = data >> 48;
+    res[7] = data >> 56;
     return res;
 }
 
+uint32_t u32rotr(uint32_t n, int d) {
+    const unsigned int mask = (CHAR_BIT * sizeof(n) - 1);
+    d &= mask;
+    return (n >> d) | (n << ((-d) & mask));
+}
+
+uint32_t u32rotl(uint32_t n, int d) {
+    return (n << d) | (n >> (32 - d));
+}
+
+vector<uint8_t> random_data(int len) {
+    vector<uint8_t> res(len);
+    for (int i = 0; i < len; i++) {
+        res[i] = (uint8_t)rand();
+    }
+    return res;
+}
 

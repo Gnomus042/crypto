@@ -152,3 +152,24 @@ Also, there is a small subset of tests available in the *tests* folder (*test2.c
 | AES 128 OFB | 225 s |
 | AES 128 CTR | 225 s |
 
+# Information security Lab #3
+SHA-256 and Kupyna-n hash functions implemented. Implementations can be found in the 
+folder *Lab3*, classes SHA256 and Kupyna. Also, unit tests, POW and usage examples 
+can be found in  ```test/test3.xpp```. 
+
+## POW tests
+
+| Hash function  | Zero bits | time
+| ------------- | ------------- | ------------- |
+| SHA-256  | 8 | 2ms  |
+| SHA-256 | 16 | 166ms |
+| SHA-256 | 24 | 9s 463ms |
+| Kupyna-256 | 8 | 3ms |
+| Kupyna-256 | 16 | 254ms |
+| Kupyna-256 | 24 | 9s 266ms |
+| Kupyna-384 | 8 | 4ms |
+| Kupyna-384 | 16 | 229ms |
+| Kupyna-384 | 24 | 10s 787ms |
+| Kupyna-512 | 8 | 5ms |
+| Kupyna-512 | 16 | 257ms |
+| Kupyna-512 | 24 | 12s 926ms |

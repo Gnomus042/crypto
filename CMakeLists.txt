@@ -9,12 +9,18 @@ set(
         Lab1/AES.h
         helper.cpp
         helper.h
+        kalyna_tables.cpp
+        kalyna_tables.h
         Lab1/Kalyna.cpp
         Lab1/Kalyna.h
         Lab2/RC4.cpp
         Lab2/RC4.h
         Lab2/Salsa20.cpp
         Lab2/Salsa20.h
+        Lab3/SHA256.cpp
+        Lab3/SHA256.h
+        Lab3/Kupyna.cpp
+        Lab3/Kupyna.h
 )
 
 # Add executable target with source files listed in SOURCE_FILES variable
@@ -29,6 +35,7 @@ set(
         TESTS
         test/test1.cpp
         test/test2.cpp
+        test/test3.cpp
         test/file_test.cpp
 )
 

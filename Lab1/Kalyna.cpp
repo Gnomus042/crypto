@@ -3,7 +3,6 @@
 //
 
 #include "Kalyna.h"
-#include "kalyna_tables.h"
 
 Kalyna::Kalyna(const vector<uint8_t> &key, int key_size, int block_size) {
     this->key_size = key_size;

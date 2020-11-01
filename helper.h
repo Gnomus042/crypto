@@ -29,6 +29,7 @@ struct Block {
     Block(int x, int y);
     Block(const Block& other);
     Block operator+(const Block &other) const;
+    void print();
     void copyFrom(const Block& other);
     vector<uint8_t> get_data() const;
     void print() const;
@@ -38,6 +39,8 @@ struct Block {
     void right_rotate(int val);
     uint64_t get_col(int number) const;
     void set_col(int number, uint64_t);
+
+    void rotate_row(int n, int d);
 };
 
 void sub_bytes(Block& block, const vector<vector<Byte>> &substitution_boxes);
@@ -50,5 +53,11 @@ void sub_round_key(Block& block, const Block& key);
 
 uint32_t u8to32(const uint8_t *begin);
 vector<uint8_t> u32to8(uint32_t data);
+vector<uint8_t> u64to8(uint64_t data);
+
+uint32_t u32rotr(uint32_t n, int d);
+uint32_t u32rotl(uint32_t n, int d);
+
+vector<uint8_t> random_data(int len);
 
 #endif //CRYPTO_HELPER_H

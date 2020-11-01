@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <iostream>
 #include "../helper.h"
+#include "../kalyna_tables.h"
 
 using namespace std;
 
