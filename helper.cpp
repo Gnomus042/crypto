@@ -165,7 +165,7 @@ void Block::rotate_row(int n, int d) {
 void Block::print() {
     for (int i = 0; i < x; i++) {
         for (int j = 0; j < y; j++) {
-            cout << hex << (int)data[i][j].data << " ";
+            cout << hex << (int) data[i][j].data << " ";
         }
         cout << endl;
     }
@@ -260,6 +260,17 @@ vector<uint8_t> u32to8(uint32_t data) {
     return res;
 }
 
+uint64_t u8to64(const uint8_t *begin) {
+    return static_cast<uint64_t>(*begin) << 56 |
+           static_cast<uint64_t>(*(begin + 1)) << 48 |
+           static_cast<uint64_t>(*(begin + 2)) << 40 |
+           static_cast<uint64_t>(*(begin + 3)) << 32 |
+           static_cast<uint64_t>(*(begin + 4)) << 24 |
+           static_cast<uint64_t>(*(begin + 5)) << 16 |
+           static_cast<uint64_t>(*(begin + 6)) << 8 |
+           static_cast<uint64_t>(*(begin + 7));
+}
+
 vector<uint8_t> u64to8(uint64_t data) {
     vector<uint8_t> res(8);
     res[0] = data;
@@ -286,8 +297,7 @@ uint32_t u32rotl(uint32_t n, int d) {
 vector<uint8_t> random_data(int len) {
     vector<uint8_t> res(len);
     for (int i = 0; i < len; i++) {
-        res[i] = (uint8_t)rand();
+        res[i] = (uint8_t) rand();
     }
     return res;
 }
-

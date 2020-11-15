@@ -133,7 +133,7 @@ TEST (Kupyna512, pow) {
     vector<uint8_t> random_seq = random_data(20);
     Kupyna kupyna = Kupyna(512);
     vector<uint8_t> hash = kupyna.hash(random_seq);
-    while(!check_pow(3, hash)) {
+    while(!check_pow(1, hash)) {
         random_seq = random_data(20);
         hash = SHA256::hash(random_seq);
     }

@@ -173,3 +173,17 @@ can be found in  ```test/test3.xpp```.
 | Kupyna-512 | 8 | 5ms |
 | Kupyna-512 | 16 | 257ms |
 | Kupyna-512 | 24 | 12s 926ms |
+
+# Information security Lab #4
+Arbitrary-precision arithmetic implemented in BigInt class. RSA and RSA-OAEP encryption implemented on top of it 
+(see `Lab4/..`). Tests (and usage examples) for BigInt are in the folder `test/big_int.cpp`; for RSA - in the folder 
+`test/test4.cpp`.
+
+## RSA encryption/decryption speed tests
+
+| Algorithm | p&q length <br/>(binary) | time
+| ------------- | ------------- | ------------- |
+| RSA  | 1024 | 6s 770ms  |
+| RSA | 512 | 6s 989ms |
+| RSA | 256 | 848ms |
+| RSA | 128 | 158ms |

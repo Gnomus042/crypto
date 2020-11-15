@@ -53,6 +53,7 @@ void sub_round_key(Block& block, const Block& key);
 
 uint32_t u8to32(const uint8_t *begin);
 vector<uint8_t> u32to8(uint32_t data);
+uint64_t u8to64(const uint8_t *begin);
 vector<uint8_t> u64to8(uint64_t data);
 
 uint32_t u32rotr(uint32_t n, int d);

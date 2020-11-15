@@ -21,6 +21,12 @@ set(
         Lab3/SHA256.h
         Lab3/Kupyna.cpp
         Lab3/Kupyna.h
+        Lab4/MillerRabin.cpp
+        Lab4/MillerRabin.h
+        Lab4/RSA.cpp
+        Lab4/RSA.h
+        BigInt.cpp
+        BigInt.h
 )
 
 # Add executable target with source files listed in SOURCE_FILES variable
@@ -36,6 +42,8 @@ set(
         test/test1.cpp
         test/test2.cpp
         test/test3.cpp
+        test/test4.cpp
+        test/big_int.cpp
         test/file_test.cpp
 )
 
