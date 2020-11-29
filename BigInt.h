@@ -14,7 +14,8 @@
 
 using namespace std;
 
-const uint64_t BASE = 1ull << 32u;
+const uint64_t BASE_BITS = 32u;
+const uint64_t BASE = 1ull << BASE_BITS;
 
 class BigInt {
 public:
@@ -42,6 +43,14 @@ public:
 
     BigInt operator%(const BigInt &other) const;
 
+    BigInt operator^(const BigInt &other) const;
+
+    BigInt operator&(const BigInt &other) const;
+
+    BigInt operator>>(uint64_t bits) const;
+
+    BigInt operator<<(uint64_t bits) const;
+
     BigInt &operator+=(const BigInt &other);
 
     BigInt &operator-=(const BigInt &other);
@@ -54,7 +63,7 @@ public:
 
     static BigInt pow(const BigInt &n, const BigInt &p);
 
-    static BigInt mpow(const BigInt &n, const BigInt &p, const BigInt &m);
+    static BigInt mpow(BigInt n, BigInt p, const BigInt &m);
 
     static BigInt gcd(BigInt first, BigInt second);
 
@@ -62,16 +71,34 @@ public:
 
     static BigInt inverseModulo(const BigInt & a, const BigInt & m);
 
+    static BigInt fromHex(const std::string & hex);
+
+    uint64_t bit_size() const;
+
     vector<uint8_t> tou8();
 
     friend ostream operator<<(const ostream &o, const BigInt &other);
+
+    bool isOdd() const;
+
+    bool isZero() const;
+
+    uint64_t lowestDigit() const;
+
+    void makePoly(bool p = true);
 
 public:
     pair<BigInt, BigInt> DivMod(BigInt other) const;
 
     uint64_t GetTop2() const;
 
+    uint64_t GetTop() const;
+
+    void truncate();
+
     vector<uint64_t> number;
+
+    bool is_poly = false;
 };
 
 

@@ -25,6 +25,8 @@ set(
         Lab4/MillerRabin.h
         Lab4/RSA.cpp
         Lab4/RSA.h
+        Lab5/EllipticCurve.cpp
+        Lab5/EllipticCurve.h
         BigInt.cpp
         BigInt.h
 )
@@ -43,6 +45,7 @@ set(
         test/test2.cpp
         test/test3.cpp
         test/test4.cpp
+        test/test5.cpp
         test/big_int.cpp
         test/file_test.cpp
 )

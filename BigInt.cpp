@@ -76,18 +76,31 @@ BigInt BigInt::operator+(const BigInt &other) const {
     res.number.assign(max(other.number.size(), this->number.size()) + 1, 0);
     for (int i = 0; i < max(other.number.size(), this->number.size()); i++) {
         if (i >= other.number.size()) {
-            getAt(res.number, i) += getAt(this->number, i);
+            if (is_poly) {
+                getAt(res.number, i) ^= getAt(this->number, i);
+            } else {
+                getAt(res.number, i) += getAt(this->number, i);
+            }
         } else if (i >= this->number.size()) {
-            getAt(res.number, i) += getAt(other.number, i);
+            if (is_poly) {
+                getAt(res.number, i) ^= getAt(other.number, i);
+            } else {
+                getAt(res.number, i) += getAt(other.number, i);
+            }
         } else {
-            getAt(res.number, i) += getAt(other.number, i) + getAt(this->number, i);
+            if (is_poly) {
+                getAt(res.number, i) ^= getAt(other.number, i) ^ getAt(this->number, i);
+            } else {
+                getAt(res.number, i) += getAt(other.number, i) + getAt(this->number, i);
+            }
         }
         getAt(res.number, i + 1) = getAt(res.number, i) / BASE;
         getAt(res.number, i) = getAt(res.number, i) % BASE;
     }
-    if (res.number.back() == 0) {
-        res.number.pop_back();
+    if (is_poly) {
+        res.makePoly();
     }
+    res.truncate();
     return res;
 }
 
@@ -102,8 +115,17 @@ BigInt BigInt::operator-(const BigInt &other) const {
             getAt(res.number, i) -= getAt(other.number, i);
         }
     }
-    while (res.number.size() > 1 && res.number.back() == 0) {
-        res.number.pop_back();
+    res.truncate();
+    return res;
+}
+
+uint64_t poly_mul(uint64_t a, uint64_t b) {
+    uint64_t res = 0;
+    while (b) {
+        if (b & 1)
+            res ^= a;
+        a = a << 1;
+        b >>= 1;
     }
     return res;
 }
@@ -113,14 +135,21 @@ BigInt BigInt::operator*(const BigInt &other) const {
     res.number.assign(this->number.size() + other.number.size(), 0);
     for (int i = 0; i < this->number.size(); i++) {
         for (int j = 0; j < other.number.size(); j++) {
-            getAt(res.number, i + j) += getAt(this->number, i) * getAt(other.number, j);
-            getAt(res.number, i + j + 1) += getAt(res.number, i + j) / BASE;
-            getAt(res.number, i + j) = getAt(res.number, i + j) % BASE;
+            if (is_poly) {
+                getAt(res.number, i + j) ^= poly_mul(getAt(this->number, i), getAt(other.number, j));
+                getAt(res.number, i + j + 1) ^= getAt(res.number, i + j) >> BASE_BITS;
+                getAt(res.number, i + j) = getAt(res.number, i + j) & (BASE - 1);
+            } else {
+                getAt(res.number, i + j) += getAt(this->number, i) * getAt(other.number, j);
+                getAt(res.number, i + j + 1) += getAt(res.number, i + j) / BASE;
+                getAt(res.number, i + j) = getAt(res.number, i + j) % BASE;
+            }
         }
     }
-    if (res.number.back() == 0) {
-        res.number.pop_back();
+    if (is_poly) {
+        res.makePoly();
     }
+    res.truncate();
     return res;
 }
 
@@ -133,6 +162,25 @@ BigInt BigInt::operator%(const BigInt &other) const {
 }
 
 pair<BigInt, BigInt> BigInt::DivMod(BigInt other) const {
+
+    if (is_poly) {
+        if (bit_size() < other.bit_size()) {
+            return {0, *this};
+        }
+        uint64_t c = (bit_size() - other.bit_size());
+        BigInt res;
+        res.makePoly();
+        BigInt tmp = *this;
+        for(uint64_t i = 0; i <= c; i++) {
+            uint64_t j = c - i;
+            if (tmp.bit_size() == bit_size() - i) {
+                tmp = tmp ^ (other << j);
+                res = res ^ (BigInt(1) << j);
+            }
+        }
+        return {res, tmp};
+    }
+
     assert(other != BigInt(0));
     if (other > *this)
         return {BigInt(0), *this};
@@ -149,28 +197,27 @@ pair<BigInt, BigInt> BigInt::DivMod(BigInt other) const {
             res.number[j] = cur / other.number[0];
             carry = cur % other.number[0];
         }
-        while (res.number.size() > 1 && res.number.back() == 0) {
-            res.number.pop_back();
-        }
+        res.truncate();
         return {res, carry};
     }
     BigInt res;
     BigInt dividend = *this;
-    BigInt normalization(1);
-    if (other.number.back() < BASE / 2) {
-        normalization = BigInt(BASE / (other.number.back() + 1));
-        other = other * normalization;
-        dividend = dividend * normalization;
+
+    uint64_t offset = 0;
+    while ((other.GetTop() << offset) <= ((BASE - 1) >> 1)) {
+        offset++;
     }
+
+    dividend = dividend << offset;
+    other = other << offset;
+
     BigInt cut;
     cut.number = vector<uint64_t>(dividend.number.end() - other.number.size() + 1, dividend.number.end());
     auto pointer = dividend.number.end() - other.number.size() + 1;
     do {
         pointer--;
         cut.number.insert(cut.number.begin(), *pointer);
-        while (cut.number.size() > 1 && cut.number.back() == 0) {
-            cut.number.pop_back();
-        }
+        cut.truncate();
         uint64_t digit = 0;
         if (cut.number.size() == other.number.size()) {
             digit = cut.number.back() / other.number.back();
@@ -189,14 +236,10 @@ pair<BigInt, BigInt> BigInt::DivMod(BigInt other) const {
         res.number.insert(res.number.begin(), digit);
     } while (pointer != dividend.number.begin());
 
-    while (res.number.size() > 1 && res.number.back() == 0) {
-        res.number.pop_back();
-    }
-    while (cut.number.size() > 1 && cut.number.back() == 0) {
-        cut.number.pop_back();
-    }
+    res.truncate();
+    cut.truncate();
 
-    return {res, cut / normalization};
+    return {res, cut >> offset};
 }
 
 uint64_t BigInt::GetTop2() const {
@@ -247,15 +290,18 @@ BigInt BigInt::pow(const BigInt &n, const BigInt &p) {
     }
 }
 
-BigInt BigInt::mpow(const BigInt &n, const BigInt &p, const BigInt &m) {
-    if (p == 0)
-        return 1;
-    if (p % 2 == 1)
-        return (mpow(n, p - 1, m) * n) % m;
-    else {
-        BigInt b = mpow(n, p / 2, m);
-        return (b * b) % m;
+BigInt BigInt::mpow(BigInt n, BigInt p, const BigInt &m) {
+    BigInt res = 1;
+    while (!p.isZero()) {
+        if (p.isOdd()) {
+            res *= n;
+            res = res % m;
+        }
+        n = n * n;
+        n = n % m;
+        p = p >> 1;
     }
+    return res;
 }
 
 BigInt BigInt::gcd(BigInt first, BigInt second) {
@@ -317,10 +363,147 @@ BigInt BigInt::inverseModulo(const BigInt &a, const BigInt &m) {
 vector<uint8_t> BigInt::tou8() {
     vector<uint8_t> res;
     for (uint64_t block:this->number) {
-        vector<uint8_t> temp = u32to8((uint32_t)block);
+        vector<uint8_t> temp = u32to8((uint32_t) block);
         res.insert(res.end(), temp.begin(), temp.end());
     }
     return res;
+}
+
+BigInt BigInt::operator^(const BigInt &other) const {
+    BigInt res;
+    BigInt min;
+    if (number.size() >= other.number.size()) {
+        res = *this;
+        min = other;
+    } else {
+        res = other;
+        min = *this;
+    }
+    for (int i = 0; i < min.number.size(); i++) {
+        res.number[i] ^= min.number[i];
+    }
+    res.truncate();
+    return res;
+}
+
+BigInt BigInt::operator&(const BigInt &other) const {
+    BigInt res;
+    BigInt min;
+    if (number.size() >= other.number.size()) {
+        res = *this;
+        min = other;
+    } else {
+        res = other;
+        min = *this;
+    }
+    for (int i = 0; i < min.number.size(); i++) {
+        res.number[i] &= min.number[i];
+    }
+    res.number.resize(min.number.size());
+    res.truncate();
+    return res;
+}
+
+bool BigInt::isOdd() const {
+    return number[0] & 1u;
+}
+
+void BigInt::truncate() {
+    while (number.size() > 1 && number.back() == 0) {
+        number.pop_back();
+    }
+}
+
+BigInt BigInt::operator<<(uint64_t bits) const {
+    BigInt res = *this;
+
+    uint64_t digits_offset = bits / BASE_BITS;
+    uint64_t offset = bits % BASE_BITS;
+
+    uint64_t prefix = res.number.back() >> (BASE_BITS - offset);
+
+    size_t prev_size = res.number.size();
+    res.number.reserve(res.number.size() + digits_offset + 1);
+    res.number.resize(res.number.size() + digits_offset);
+
+    for (size_t i = 0; i + 1 < prev_size; i++) {
+        size_t j = prev_size - i - 1;
+        res.number[j + digits_offset] =
+                ((res.number[j] << offset) | (res.number[j - 1] >> (BASE_BITS - offset))) & (BASE - 1);
+    }
+
+    res.number[digits_offset] = (res.number[0] << offset) & (BASE - 1);
+
+    if (prefix) {
+        res.number.push_back(prefix);
+    }
+
+    for (size_t i = 0; i < digits_offset; i++) {
+        res.number[i] = 0;
+    }
+    res.truncate();
+    return res;
+}
+
+BigInt BigInt::operator>>(uint64_t bits) const {
+    BigInt res = *this;
+
+    uint64_t digits_offset = bits / BASE_BITS;
+    uint64_t offset = bits % BASE_BITS;
+
+    if (digits_offset >= res.number.size()) {
+        return 0;
+    }
+
+    res.number.erase(res.number.begin(), res.number.begin() + digits_offset);
+    res.number[0] >>= offset;
+    for (size_t i = 0; i + 1 < res.number.size(); i++) {
+        res.number[i] |= (res.number[i + 1] << (BASE_BITS - offset)) & (BASE - 1);
+        res.number[i + 1] >>= offset;
+    }
+    res.truncate();
+    return res;
+}
+
+bool BigInt::isZero() const {
+    return number.size() == 1 && number[0] == 0;
+}
+
+uint64_t BigInt::lowestDigit() const {
+    return number[0];
+}
+
+BigInt BigInt::fromHex(const string &hex) {
+    BigInt res = 0;
+    for (char c : hex) {
+        res *= 16;
+        if (c >= '0' && c <= '9')
+            res += (c - '0');
+        else
+            res += (c - 'A' + 10);
+    }
+    return res;
+}
+
+void BigInt::makePoly(bool p) {
+    is_poly = p;
+}
+
+uint64_t BigInt::GetTop() const {
+    return number.back();
+}
+
+uint64_t BigInt::bit_size() const {
+    if (isZero()) {
+        return 1;
+    }
+    uint64_t l = (number.size() - 1) * BASE_BITS;
+    uint64_t x = GetTop();
+    while(x) {
+        x>>=1;
+        l++;
+    }
+    return l;
 }
 
 
